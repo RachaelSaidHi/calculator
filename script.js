@@ -4,6 +4,7 @@ let previousInput = '';
 let shouldResetDisplay = false;
 let lastActiveButton = null;
 let hasDecimal = false;
+let lastPressedEquals = false;
 
 const display = document.getElementById('display');
 
@@ -16,10 +17,11 @@ function setActiveButton(button) {
 }
 
 function appendNumber(num) {
-    if (shouldResetDisplay) {
+    if (shouldResetDisplay || lastPressedEquals) {
         currentInput = '';
         shouldResetDisplay = false;
         hasDecimal = false;
+        lastPressedEquals = false;
     }
 
     // Handle decimal point
@@ -36,19 +38,21 @@ function appendNumber(num) {
 
 function setOperator(operator) {
     if (currentInput === '') return;
+    lastPressedEquals = false;
     if (previousInput !== '') {
         calculateResult();
     }
     previousInput = currentInput;
     currentOperator = operator;
     shouldResetDisplay = true;
-    hasDecimal = false; // Reset decimal flag for new number
+    hasDecimal = false;
     setActiveButton(event.currentTarget);
 }
 
 function clearEntry() {
     currentInput = '';
     hasDecimal = false;
+    lastPressedEquals = false;
     updateDisplay();
     setActiveButton(event.currentTarget);
 }
@@ -58,6 +62,7 @@ function deleteLast() {
         hasDecimal = false;
     }
     currentInput = currentInput.slice(0, -1);
+    lastPressedEquals = false;
     updateDisplay();
     setActiveButton(event.currentTarget);
 }
@@ -65,12 +70,14 @@ function deleteLast() {
 function calculatePi() {
     currentInput = Math.PI.toString();
     hasDecimal = true;
+    lastPressedEquals = false;
     updateDisplay();
     setActiveButton(event.currentTarget);
 }
 
 function calculate(operation) {
     if (currentInput === '') return;
+    lastPressedEquals = false;
     
     const num = parseFloat(currentInput);
     let result;
@@ -85,9 +92,14 @@ function calculate(operation) {
         case 'tan':
             result = Math.tan(num * Math.PI / 180);
             break;
-        case 'sqrt':
-            result = Math.sqrt(num);
-            break;
+        case 'root':
+            // For nth root, we'll store the current number as the root index
+            previousInput = currentInput;
+            currentOperator = 'root';
+            shouldResetDisplay = true;
+            hasDecimal = false;
+            setActiveButton(event.currentTarget);
+            return;
         case 'log':
             result = Math.log10(num);
             break;
@@ -139,6 +151,14 @@ function calculateResult() {
         case 'pow':
             result = Math.pow(prev, current);
             break;
+        case 'root':
+            // Calculate nth root using the power of 1/n
+            if (prev === 0) {
+                alert('Root index cannot be zero');
+                return;
+            }
+            result = Math.pow(current, 1/prev);
+            break;
         default:
             return;
     }
@@ -147,6 +167,7 @@ function calculateResult() {
     hasDecimal = currentInput.includes('.');
     previousInput = '';
     currentOperator = '';
+    lastPressedEquals = true;
     updateDisplay();
     setActiveButton(event.currentTarget);
 }
@@ -170,7 +191,7 @@ document.addEventListener('keydown', (event) => {
     let button = null;
     
     if (/[0-9.]/.test(key)) {
-        if (key === '.' && hasDecimal) return; // Prevent multiple decimals from keyboard
+        if (key === '.' && hasDecimal) return;
         button = document.querySelector(`button:not(.operator):not(.function):not(.clear):not(.equals)`);
         appendNumber(key);
     } else if (['+', '-', '*', '/'].includes(key)) {
