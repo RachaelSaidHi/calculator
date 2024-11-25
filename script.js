@@ -93,7 +93,6 @@ function calculate(operation) {
             result = Math.tan(num * Math.PI / 180);
             break;
         case 'root':
-            // For nth root, we'll store the current number as the root index
             previousInput = currentInput;
             currentOperator = 'root';
             shouldResetDisplay = true;
@@ -152,7 +151,6 @@ function calculateResult() {
             result = Math.pow(prev, current);
             break;
         case 'root':
-            // Calculate nth root using the power of 1/n
             if (prev === 0) {
                 alert('Root index cannot be zero');
                 return;
@@ -182,30 +180,4 @@ updateDisplay();
 // Initialize data-active attributes
 document.querySelectorAll('button').forEach(button => {
     button.setAttribute('data-active', 'false');
-});
-
-// Add keyboard support
-document.addEventListener('keydown', (event) => {
-    const key = event.key;
-    
-    let button = null;
-    
-    if (/[0-9.]/.test(key)) {
-        if (key === '.' && hasDecimal) return;
-        button = document.querySelector(`button:not(.operator):not(.function):not(.clear):not(.equals)`);
-        appendNumber(key);
-    } else if (['+', '-', '*', '/'].includes(key)) {
-        button = document.querySelector(`button.operator`);
-        setOperator(key);
-    } else if (key === 'Enter' || key === '=') {
-        button = document.querySelector('.equals');
-        calculateResult();
-    } else if (key === 'Backspace') {
-        button = document.querySelector(`button:not(.operator):not(.function):not(.clear):not(.equals)`);
-        deleteLast();
-    }
-    
-    if (button) {
-        setActiveButton(button);
-    }
 });
